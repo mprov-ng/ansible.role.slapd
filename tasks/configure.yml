@@ -1,0 +1,70 @@
+---
+  - name: Hash new OLC Root PW
+    shell: /usr/sbin/slappasswd -h {"{{ slapd_hashing_algo }}"} -s {{ slapd_root_pw }}
+    register: slapd_root_pw_hash
+    changed_when: false
+
+  - name: Copy slapd config
+    template:
+      src: slapd.conf.j2
+      dest: /etc/openldap/slapd.conf
+      group: ldap
+      mode: 0640
+
+  - name: Get the version of autofs (I HATE DUMB CODERS!!!)
+    command: '/usr/bin/rpm -qa autofs --queryformat %{VERSION}'
+    register: autofs_version
+    changed_when: false
+
+  - name: Copy the autofs.schema to /etc/openldap/schema/
+    command: "cp /usr/share/doc/autofs-{{ autofs_version.stdout }}/autofs.schema /etc/openldap/schema/"
+    
+
+  - name: Remove old slapd.d directory
+    file: 
+      state: absent
+      path: /etc/openldap/slapd.d/
+
+  - name: Remove old ldap data directory
+    file: 
+      state: absent
+      path: /var/lib/ldap/ 
+
+  - name: Create ldap data directory
+    file: 
+      state: directory
+      owner: ldap
+      group: ldap
+      mode: 0700
+      path: /var/lib/ldap/
+
+  - name: Create slapd.d directory
+    file:
+      state: directory
+      owner: ldap
+      group: ldap
+      mode: 0750
+      path: /etc/openldap/slapd.d/
+
+
+  - name: Convert slapd.conf to config dir
+    command: /usr/sbin/slapd -u ldap -F /etc/openldap/slapd.d -f /etc/openldap/slapd.conf
+
+  - name: Stop slapd
+    shell: "pkill slapd"
+
+  - block:
+    - name: Enable ldaps
+      set_fact:
+        slapd_protocols: "{{ slapd_protocols + ' ldaps:///'}}"
+
+    - name: Update protocols
+      lineinfile:
+        path: "{{ slapd_defaults_path }}"
+        regexp: "{{ slapd_protocols_line_regex}}"
+        line: '{{ slapd_protocols_line }}="{{ slapd_protocols }}"'
+      become: true
+    when: slapd_ssl == true
+
+
+

@@ -1,0 +1,83 @@
+---
+- name: "Check for reconfigure of slapd..."
+  stat: 
+    path: /var/lib/ldap/ansible_configured
+  register: reconfig_file
+
+- name: Install slapd Server
+  package:
+    name: "{{ item }}"
+    state: latest
+  with_items: "{{ slapd_server_pkgs }}"
+  become: true
+
+- name: Install LDAP Utils
+  package:
+    name: "{{ item }}"
+    state: latest
+  with_items: "{{ slapd_utils_pkgs }}"
+  become: true
+
+- name: Install SSL Utils
+  package:
+    name: "{{ item }}"
+    state: latest
+  with_items: "{{ slapd_ssl_utils_pkgs }}"
+  become: true
+
+
+- block: 
+  # tasks file for slapd
+  - name: Create TMP Dir
+    file:
+      path: "{{ slapd_tmp_dir }}"
+      state: directory
+      mode: 0700
+      owner: root
+      group: root
+    become: true
+    changed_when: false
+
+
+  - import_tasks: configure.yml
+
+  - name: Remove TMP Dir
+    file:
+      path: "{{ slapd_tmp_dir }}"
+      state: absent
+    become: true
+    changed_when: false
+
+  - block: 
+  # tasks to dump in a backup, if required.
+    
+    - name: Unzip the ldif
+      command: gunzip -f /tmp/slapd-backup.ldiff.gz
+
+    - name: Run a test import to slapd (aka. dry-run)
+      command:  slapadd -u -l /tmp/slapd-backup.ldiff
+
+    - name: Run the actual import to slapd
+      command: slapadd -l /tmp/slapd-backup.ldiff
+    
+    - name: Fix perms on /var/lib/ldap
+      file:  
+        path: /var/lib/ldap
+        state: directory
+        recurse: yes
+        owner: ldap
+        group: ldap
+    when: slapd_restore_backup == true 
+
+  - name: Restart slapd
+    service:
+      name: slapd
+      state: started
+    when: ansible_connection != "chroot"
+    become: true
+  - name: Touch the reconfig file
+    file: 
+      state: touch
+      path: /var/lib/ldap/ansible_configured
+
+  when: reconfig_file.stat.exists != true

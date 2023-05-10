@@ -1,0 +1,149 @@
+#
+# See slapd.conf(5) for details on configuration options.
+# This file should NOT be world readable.
+#
+include		/etc/openldap/schema/core.schema
+include		/etc/openldap/schema/cosine.schema
+include		/etc/openldap/schema/inetorgperson.schema
+include		/etc/openldap/schema/nis.schema
+include		/etc/openldap/schema/autofs.schema
+
+# Allow LDAPv2 client connections.  This is NOT the default.
+allow bind_v2
+
+# Do not enable referrals until AFTER you have a working directory
+# service AND an understanding of referrals.
+#referral	ldap://root.openldap.org
+
+pidfile		/var/run/openldap/slapd.pid
+argsfile	/var/run/openldap/slapd.args
+
+# Load dynamic backend modules:
+# modulepath	/sbin/openldap
+# moduleload	back_bdb.la
+# moduleload	back_ldap.la
+# moduleload	back_ldbm.la
+# moduleload	back_passwd.la
+# moduleload	back_shell.la
+moduleload syncprov.la
+
+# The next three lines allow use of TLS for encrypting connections using a
+# dummy test certificate which you can generate by changing to
+# /usr/share/ssl/certs, running "make slapd.pem", and fixing permissions on
+# slapd.pem so that the ldap user or group can read it.  Your client software
+# may balk at self-signed certificates, however.
+TLSCACertificateFile {{ slapd_ssl_cert_ca_path }}
+#TLSCACertificatePath /etc/pki/tls/cacerts/
+TLSCertificateFile {{ slapd_ssl_cert_path }}
+TLSCertificateKeyFile {{ slapd_ssl_cert_key_path }}
+
+# Sample security restrictions
+#	Require integrity protection (prevent hijacking)
+#	Require 112-bit (3DES or better) encryption for updates
+#	Require 63-bit encryption for simple bind
+# security ssf=1 update_ssf=112 simple_bind=64
+
+# Sample access control policy:
+#	Root DSE: allow anyone to read it
+#	Subschema (sub)entry DSE: allow anyone to read it
+#	Other DSEs:
+#		Allow self write access
+#		Allow authenticated users read access
+#		Allow anonymous users to authenticate
+#	Directives needed to implement policy:
+# access to dn.base="" by * read
+# access to dn.base="cn=Subschema" by * read
+# access to *
+#	by self write
+#	by users read
+#	by anonymous auth
+#
+# if no access controls are present, the default policy
+# allows anyone and everyone to read anything but restricts
+# updates to rootdn.  (e.g., "access to * by * read")
+#
+# rootdn can always read and write EVERYTHING!
+
+# the "rogroup" contains user with a read-only access to the directory
+access to attrs=userPassword
+ by group.exact="cn=rogroup,{{ slapd_suffix }}" read
+ by self write
+ by anonymous auth
+ by * none
+
+access to dn=""
+ by group.exact="cn=rogroup,{{ slapd_suffix }}" read
+ by * read
+
+access to attrs=loginShell,shadowLastChange
+ by group.exact="cn=rogroup,{{ slapd_suffix }}" read
+ by self write
+ by * read
+
+access to *
+ by group.exact="cn=ldapadmins,ou=Group,{{ slapd_suffix }}" write
+ by group.exact="cn=rogroup,{{ slapd_suffix }}" read
+ by * read
+
+
+
+access to *
+ by self write
+ by users read
+ by anonymous auth
+
+#######################################################################
+# ldbm and/or bdb database definitions
+#######################################################################
+
+database	bdb
+suffix		{{ slapd_suffix }}
+rootdn		{{ slapd_root_dn }}
+# Cleartext passwords, especially for the rootdn, should
+# be avoided.  See slappasswd(8) and slapd.conf(5) for details.
+# Use of strong authentication encouraged.
+# rootpw		secret
+# rootpw		{crypt}ijFYNcSNctBYg
+rootpw {{ slapd_root_pw_hash.stdout }}
+
+# The database directory MUST exist prior to running slapd AND 
+# should only be accessible by the slapd and slap tools.
+# Mode 700 recommended.
+directory	/var/lib/ldap
+
+# Indices to maintain for this database
+index objectClass                       eq,pres
+index ou,cn,mail,surname,givenname      eq,pres,sub
+index uidNumber,gidNumber,loginShell    eq,pres
+index uid,memberUid                     eq,pres,sub
+index uniqueMember                      eq,pres
+index nisMapName,nisMapEntry            eq,pres,sub
+
+# Replicas of this database
+#replogfile /var/lib/ldap/openldap-master-replog
+#replica host=ldap-1.example.com:389 starttls=critical
+#     bindmethod=sasl saslmech=GSSAPI
+#     authcId=host/ldap-master.example.com@EXAMPLE.COM
+
+# Kill inactive connections after 101 seconds
+idletimeout 101
+
+# Maintain 10000 entries in memory, increase if number of records is far greater
+cachesize 10000
+
+# Checkpoint the database every 5 minutes, or after 128Kb of writes (whichever comes first)
+checkpoint 128 5
+
+# Do not log debugging output
+loglevel 9
+
+# Allow unlimited result-sets to be returned
+sizelimit unlimited
+
+#Explicitly disable monitoring to prevent annoying warning
+monitoring off
+
+index entryCSN,entryUUID eq
+overlay syncprov
+syncprov-checkpoint 100 10
+syncprov-sessionlog 100
