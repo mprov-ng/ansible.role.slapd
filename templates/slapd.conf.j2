@@ -6,8 +6,9 @@ include		/etc/openldap/schema/core.schema
 include		/etc/openldap/schema/cosine.schema
 include		/etc/openldap/schema/inetorgperson.schema
 include		/etc/openldap/schema/nis.schema
-include		/etc/openldap/schema/autofs.schema
-
+{% if slapd_autofs %}
+#include		/etc/openldap/schema/autofs.schema
+{% endif %}
 # Allow LDAPv2 client connections.  This is NOT the default.
 allow bind_v2
 
