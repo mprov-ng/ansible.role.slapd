@@ -36,6 +36,7 @@ slapd_ssl_cert_common_name: "{{ ansible_hostname }}"
 
 slapd_server_pkgs:
   - openldap-servers
+slapd_server_extra_repos: []
 
 slapd_utils_pkgs:
   - openldap-clients
