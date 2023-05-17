@@ -11,13 +11,8 @@
       group: ldap
       mode: 0640
 
-  - name: Get the version of autofs (I HATE DUMB CODERS!!!)
-    command: '/usr/bin/rpm -qa autofs --queryformat %{VERSION}'
-    register: autofs_version
-    changed_when: false
-
   - name: Copy the autofs.schema to /etc/openldap/schema/
-    command: "cp /usr/share/doc/autofs-{{ autofs_version.stdout }}/autofs.schema /etc/openldap/schema/"
+    command: "cp /usr/share/doc/autofs/autofs.schema /etc/openldap/schema/"
     
 
   - name: Remove old slapd.d directory
