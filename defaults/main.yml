@@ -49,7 +49,7 @@ slapd_ssl_utils_pkgs:
 slapd_server_user: "ldap"
 slapd_server_group: "ldap"
 slapd_config_path: "/etc/openldap/slapd.d/"
-
+slapd_autofs: false
 slapd_tmp_dir: "/tmp/slapd"
 
 slapd_defaults_path: "/etc/sysconfig/slapd"

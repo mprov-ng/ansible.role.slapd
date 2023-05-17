@@ -11,8 +11,11 @@
       group: ldap
       mode: 0640
 
-  - name: Copy the autofs.schema to /etc/openldap/schema/
-    command: "cp /usr/share/doc/autofs/autofs.schema /etc/openldap/schema/"
+  - block:
+    - name: Copy the autofs.schema to /etc/openldap/schema/
+      command: "cp /usr/share/doc/autofs/autofs.schema /etc/openldap/schema/"
+    when: slapd_autofs == true
+
     
 
   - name: Remove old slapd.d directory
