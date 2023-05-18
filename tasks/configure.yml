@@ -16,7 +16,7 @@
       community.crypto.openssl_privatekey:
         path: "{{ slapd_ssl_cert_key_path }}"
         size: "{{ slapd_ssl_cert_key_length }}"
-        
+
     - name: Create certificate signing request (CSR) for self-signed certificate
       community.crypto.openssl_csr_pipe:
         privatekey_path: "{{ slapd_ssl_cert_key_path }}"
@@ -31,7 +31,7 @@
       community.crypto.x509_certificate:
         path: "{{ slapd_ssl_cert_path }}"
         csr_content: "{{ csr.csr }}"
-        selfsigned_not_after: "{{ slapd_ssl_cert_duration }}d"
+        selfsigned_not_after: "+{{ slapd_ssl_cert_duration }}d"
         privatekey_path: "{{ slapd_ssl_cert_key_path }}"
         provider: selfsigned
     when: slapd_ssl == true
