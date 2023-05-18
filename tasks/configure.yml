@@ -12,6 +12,31 @@
       mode: 0640
 
   - block:
+    - name: Create private key 
+      community.crypto.openssl_privatekey:
+        path: "{{ slapd_ssl_cert_key_path }}"
+        size: "{{ slapd_ssl_cert_key_length }}"
+        
+    - name: Create certificate signing request (CSR) for self-signed certificate
+      community.crypto.openssl_csr_pipe:
+        privatekey_path: "{{ slapd_ssl_cert_key_path }}"
+        common_name: ansible.com
+        organization_name: Ansible, Inc.
+        country_name: "{{ slapd_ssl_cert_country }}"
+        locality_name: "{{ slapd_ssl_cert_location }}"
+        state_or_province_name: "{{ slapd_ssl_cert_country }}"
+      register: csr
+
+    - name: Create self-signed certificate from CSR
+      community.crypto.x509_certificate:
+        path: "{{ slapd_ssl_cert_path }}"
+        csr_content: "{{ csr.csr }}"
+        selfsigned_not_after: "{{ slapd_ssl_cert_duration }}d"
+        privatekey_path: "{{ slapd_ssl_cert_key_path }}"
+        provider: selfsigned
+    when: slapd_ssl == true
+
+  - block:
     - name: Copy the autofs.schema to /etc/openldap/schema/
       command: "cp /usr/share/doc/autofs/autofs.schema /etc/openldap/schema/"
     when: slapd_autofs == true
@@ -55,14 +80,6 @@
     - name: Enable ldaps
       set_fact:
         slapd_protocols: "{{ slapd_protocols + ' ldaps:///'}}"
-
-    - name: Update protocols
-      lineinfile:
-        path: "{{ slapd_defaults_path }}"
-        regexp: "{{ slapd_protocols_line_regex}}"
-        line: '{{ slapd_protocols_line }}="{{ slapd_protocols }}"'
-      become: true
-    when: slapd_ssl == true
 
 
 

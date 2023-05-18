@@ -51,8 +51,3 @@ slapd_server_group: "ldap"
 slapd_config_path: "/etc/openldap/slapd.d/"
 slapd_autofs: false
 slapd_tmp_dir: "/tmp/slapd"
-
-slapd_defaults_path: "/etc/sysconfig/slapd"
-
-slapd_protocols_line_regex: "^SLAPD_URLS=.*$"
-slapd_protocols_line: "SLAPD_URLS"
