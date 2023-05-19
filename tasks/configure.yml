@@ -83,14 +83,15 @@
   - name: Convert slapd.conf to config dir
     command: /usr/sbin/slapd -u ldap -F /etc/openldap/slapd.d -f /etc/openldap/slapd.conf
 
+  - name: Stop slapd
+    shell: "pkill slapd"
+
   - name: Run the inital db add
     command: /usr/sbin/slapadd -l /tmp/initialize.ldif
     become: yes
-    become_user: ldap
 
 
-  - name: Stop slapd
-    shell: "pkill slapd"
+
 
 
 

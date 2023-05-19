@@ -60,15 +60,15 @@
 
     - name: Run the actual import to slapd
       command: slapadd -l /tmp/slapd-backup.ldiff
-    
-    - name: Fix perms on /var/lib/ldap
-      file:  
-        path: /var/lib/ldap
-        state: directory
-        recurse: yes
-        owner: ldap
-        group: ldap
-    when: slapd_restore_backup == true 
+    when: slapd_restore_backup == true     
+  - name: Fix perms on /var/lib/ldap
+    file:  
+      path: /var/lib/ldap
+      state: directory
+      recurse: yes
+      owner: ldap
+      group: ldap
+
 
   - name: Restart slapd
     service:
