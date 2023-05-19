@@ -11,6 +11,13 @@
       group: ldap
       mode: 0640
 
+  - name: Copy initialize.ldif to /tmp
+    template:
+      src: initialize.ldif.j2
+      dest: /tmp/initialize.ldif
+      group: ldap
+      mode: 0600
+
   - block:
     - name: Create private key 
       community.crypto.openssl_privatekey:
@@ -75,13 +82,15 @@
   - name: Convert slapd.conf to config dir
     command: /usr/sbin/slapd -u ldap -F /etc/openldap/slapd.d -f /etc/openldap/slapd.conf
 
+  - name: Run the inital db add
+    command: /usr/sbin/slapadd -l /tmp/initialize.ldif
+    become: yes
+    become_user: ldap
+    
+
   - name: Stop slapd
     shell: "pkill slapd"
 
-  - block:
-    - name: Enable ldaps
-      set_fact:
-        slapd_protocols: "{{ slapd_protocols + ' ldaps:///'}}"
 
 
 

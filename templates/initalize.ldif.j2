@@ -1,0 +1,11 @@
+## Build the root node.
+dn: {{ slapd_suffix }}
+dc: {{ slapd_dc }}
+objectClass: dcObject
+objectClass: organizationalUnit
+ou: {{ slapd_dc }}
+      
+## Build the people ou.
+dn: ou=people,{{ slapd_suffix }}
+ou: people
+objectClass: organizationalUnit
