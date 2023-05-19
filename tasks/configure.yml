@@ -15,10 +15,7 @@
     template:
       src: initialize.ldif.j2
       dest: /tmp/initialize.ldif
-      user: ldap
-      group: ldap
-      mode: 0600
-
+  
   - block:
     - name: Create private key 
       community.crypto.openssl_privatekey:
