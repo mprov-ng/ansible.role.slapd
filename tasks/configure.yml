@@ -80,6 +80,14 @@
     command: /usr/sbin/slapadd -l /tmp/initialize.ldif
     become: yes
 
+  - name: Fix perms on /var/lib/ldap
+    file:  
+      path: /var/lib/ldap
+      state: directory
+      recurse: yes
+      owner: ldap
+      group: ldap
+
   - name: Convert slapd.conf to config dir
     command: /usr/sbin/slapd -u ldap -F /etc/openldap/slapd.d -f /etc/openldap/slapd.conf
 
