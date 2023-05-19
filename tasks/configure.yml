@@ -15,6 +15,7 @@
     template:
       src: initialize.ldif.j2
       dest: /tmp/initialize.ldif
+      user: ldap
       group: ldap
       mode: 0600
 
@@ -86,7 +87,7 @@
     command: /usr/sbin/slapadd -l /tmp/initialize.ldif
     become: yes
     become_user: ldap
-    
+
 
   - name: Stop slapd
     shell: "pkill slapd"
