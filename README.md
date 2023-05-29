@@ -31,7 +31,7 @@ License
 
 License
 -------
-[Apache](License.md)
+[Apache](LICENSE)
 
 Author Information
 ------------------
