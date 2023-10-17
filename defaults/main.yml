@@ -41,6 +41,7 @@ slapd_server_extra_repos: []
 slapd_utils_pkgs:
   - openldap-clients
   - python-ldap
+  - python*crptography
   - autofs
 
 slapd_ssl_utils_pkgs:
